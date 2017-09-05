@@ -2,7 +2,6 @@
 
 void Darknet::loadModel( std::string cfgfile, std::string weightsfile )
 {
-  cudaSetDevice(0);
   loadCfg( cfgfile);
   loadWeights( weightsfile );
 

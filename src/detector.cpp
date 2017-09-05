@@ -2,6 +2,8 @@
 
 void Detector::loadModels( std::string path_to_face_model, std::string path_to_features_model )
 {
+  cudaSetDevice(0);
+
   std::string path_to_face_weights = "models/cat_face.weights";
   _face_detector.loadModel( path_to_face_model, path_to_face_weights );
 
