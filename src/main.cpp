@@ -10,6 +10,8 @@ using namespace boost::filesystem;
 using namespace std;
 
 void help( char *argv[] );
+
+//TODO make another class for these functions (probably "function.cpp")
 void detectSingleImage( string src_path, string dst_path="" );
 void detectMultipleImages( string src_path, string dst_path="" );
 void detectVideo( string src_path, string dst_path="" );
@@ -21,31 +23,14 @@ int main( int argc, char *argv[] )
   else
   {
     string function( argv[1] );
-    if( !function.compare( "image" ) )
-    {
-      string src_path = argv[2];
-      string dst_path="";
-      if( argc > 3 )  dst_path = string( argv[3] );
-      detectSingleImage( src_path, dst_path );
-    }
-    else if( !function.compare( "images" ) )
-    {
-      string src_path = argv[2];
-      string dst_path = "";
-      if( argc > 3 )  dst_path = string( argv[3] );
-      detectMultipleImages( src_path, dst_path );
-      return 0;
-    }
-    else if( !function.compare( "video" ) )
-    {
-      // cout << "This function is not implemented yet. Sorry!" << endl;
+    string src_path = argv[2];
+    string dst_path="";
+    if( argc > 3 )  dst_path = string( argv[3] );
 
-      return 0;
-    }
-    else if( !function.compare( "help" ) )
-    {
-      help( argv );
-    }
+    if( !function.compare( "image" ) )          detectSingleImage( src_path, dst_path );
+    else if( !function.compare( "images" ) )    detectMultipleImages( src_path, dst_path );
+    else if( !function.compare( "video" ) )     detectVideo( src_path, dst_path );
+    else if( !function.compare( "help" ) )      help( argv );
     else
     {
       cout << "'" << function << "' is an invalid function!" << endl << endl;
@@ -134,6 +119,78 @@ void detectMultipleImages( string src_path, string dst_path )
     {
       string write_path = dst_path + "/" + (*it).string();
       cv::imwrite( write_path, image );
+    }
+  }
+}
+
+void detectVideo( std::string src_path, std::string dst_path )
+{
+  bool show = dst_path.compare("") == 0 ? true : false;
+
+  cv::VideoCapture cap( src_path );
+  cv::VideoWriter writer;
+
+  if( !cap.isOpened() )
+  {
+    std::cout << "Cannot open " << src_path << std::endl;
+    return;
+  }
+
+  std::cout << "Detection on video: " << src_path << std::endl;
+
+  Detector detector;
+  detector.loadModels( "models/cat_face.cfg", "models/cat_features.cfg" );
+
+  if( show )
+  {
+    cv::namedWindow( "video", cv::WINDOW_NORMAL );
+    cv::resizeWindow( "video", 800, 800 );
+  }
+  else
+  {
+    string videoname = src_path.substr( src_path.find_last_of('/')+1 );
+    string write_path = dst_path + "/" + videoname;
+
+    std::cout << "Writing detection result to: " << write_path << std::endl;
+
+    cv::Mat sample;
+    cap >> sample;
+
+    if( !sample.data )
+    {
+      std::cout << "ERROR! first frame is blank" << std::endl;
+      return;
+    }
+
+    int codec = CV_FOURCC( 'M', 'J', 'P', 'G' );
+    double fps = 25.0;
+    writer.open( write_path, codec, fps, sample.size(), true );
+
+    if( !writer.isOpened() )
+    {
+      std::cout << "ERROR! could not open " << dst_path << " for writing" << std::endl;
+      return;
+    }
+  }
+
+  while( true )
+  {
+    cv::Mat frame;
+    cap >> frame;
+
+    if( !frame.data )  break;
+
+    vector<cv::Rect> detections = detector.detect( frame );
+    Detector::drawDetections( frame, detections );
+
+    if( show )
+    {
+      cv::imshow( "video", frame );
+      cv::waitKey(5);
+    }
+    else
+    {
+      writer.write( frame );
     }
   }
 }
