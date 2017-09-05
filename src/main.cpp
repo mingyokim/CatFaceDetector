@@ -12,6 +12,7 @@ using namespace std;
 void help( char *argv[] );
 void detectSingleImage( string src_path, string dst_path="" );
 void detectMultipleImages( string src_path, string dst_path="" );
+void detectVideo( string src_path, string dst_path="" );
 vector<path> getImagePathsInFolder( const path &folder, const string &ext );
 
 int main( int argc, char *argv[] )
@@ -29,7 +30,6 @@ int main( int argc, char *argv[] )
     }
     else if( !function.compare( "images" ) )
     {
-      // cout << "This function is not implemented yet. Sorry!" << endl;
       string src_path = argv[2];
       string dst_path = "";
       if( argc > 3 )  dst_path = string( argv[3] );
@@ -38,11 +38,17 @@ int main( int argc, char *argv[] )
     }
     else if( !function.compare( "video" ) )
     {
-      cout << "This function is not implemented yet. Sorry!" << endl;
+      // cout << "This function is not implemented yet. Sorry!" << endl;
+
       return 0;
     }
     else if( !function.compare( "help" ) )
     {
+      help( argv );
+    }
+    else
+    {
+      cout << "'" << function << "' is an invalid function!" << endl << endl;
       help( argv );
     }
   }
