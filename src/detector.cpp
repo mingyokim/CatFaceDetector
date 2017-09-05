@@ -86,6 +86,7 @@ void Detector::detectFeatures( cv::Mat image, std::vector<cv::Rect> &features )
 
 void Detector::drawDetections( cv::Mat &image, std::vector<cv::Rect> detections )
 {
+  int width = image.rows * 0.006;
   for( int i = 0; i < detections.size(); i++ )
   {
     cv::Scalar color;
@@ -93,7 +94,7 @@ void Detector::drawDetections( cv::Mat &image, std::vector<cv::Rect> detections 
     else if( i <= RIGHT_EAR )   color = cv::Scalar(255,0,0);
     else if( i <= RIGHT_EYE )   color = cv::Scalar(0,255,0);
     else                        color = cv::Scalar(0,0,255);
-    cv::rectangle( image, detections[i], color, 4 );
+    cv::rectangle( image, detections[i], color, width );
   }
 }
 

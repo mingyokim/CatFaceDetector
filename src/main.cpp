@@ -115,11 +115,11 @@ void detectMultipleImages( string src_path, string dst_path )
 
     if( show )
     {
-      cv::namedWindow( "original", cv::WINDOW_NORMAL );
+      cv::namedWindow( "original", cv::WINDOW_AUTOSIZE );
       cv::resizeWindow( "original", 800, 800 );
       cv::imshow( "original", org );
 
-      cv::namedWindow( "detection", cv::WINDOW_NORMAL );
+      cv::namedWindow( "detection", cv::WINDOW_AUTOSIZE );
       cv::resizeWindow( "detection", 800, 800 );
       cv::imshow( "detection", image );
       cv::waitKey(0);

@@ -15,7 +15,7 @@ void Darknet::loadCfg( std::string cfgfile )
   char *cfg = new char[cfgfile.length()+1];
   strcpy(cfg, cfgfile.c_str());
   net = parse_network_cfg( cfg );
-  std::cout << "Done!" << std::endl;
+  std::cout << "Done!"  << std::endl;
 }
 
 void Darknet::loadWeights( std::string weightsfile )
