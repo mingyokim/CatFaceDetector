@@ -124,7 +124,11 @@ void detectMultipleImages( string src_path, string dst_path )
       cv::imshow( "detection", image );
       cv::waitKey(0);
     }
-
+    else
+    {
+      string write_path = dst_path + "/" + (*it).string();
+      cv::imwrite( write_path, image );
+    }
   }
 }
 

@@ -27,7 +27,14 @@ class Detector
   void detectFeatures( cv::Mat image, std::vector<cv::Rect> &features );
 
 public:
+  struct sortProb {
+    bool operator() ( const Darknet::Detection &a, const Darknet::Detection &b )
+    {
+      return (a.prob > b.prob);
+    }
+  } sort_prob;
   static void drawDetections( cv::Mat &image, std::vector<cv::Rect> detections );
+  static cv::Rect enlargeRect( const cv::Mat &image, cv::Rect rect, float wf, float hf );
   void loadModels( std::string path_to_face_model, std::string path_to_features_model );
   std::vector<cv::Rect> detect( cv::Mat image );
 };
