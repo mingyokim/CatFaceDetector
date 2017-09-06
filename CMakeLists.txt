@@ -18,6 +18,7 @@ set( SOURCE
   src/darknet.cpp
   src/detector.cpp
   src/main.cpp
+  src/function.cpp
 )
 
 add_executable( detector ${SOURCE} )
