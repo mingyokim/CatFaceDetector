@@ -20,7 +20,14 @@ int main( int argc, char *argv[] )
 
     if( !function.compare( "image" ) )          Function::detectSingleImage( src_path, dst_path );
     else if( !function.compare( "images" ) )    Function::detectMultipleImages( src_path, dst_path );
-    else if( !function.compare( "video" ) )     Function::detectVideo( src_path, dst_path );
+    else if( !function.compare( "video" ) )
+    {
+      bool use_tracking = false;
+      dst_path = "";
+      if( argc > 3 )  use_tracking = atoi( argv[3] );
+      if( argc > 4 )  dst_path = string( argv[4] );
+      Function::detectVideo( src_path, dst_path, use_tracking );
+    }
     else if( !function.compare( "help" ) )      help( argv );
     else
     {

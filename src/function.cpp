@@ -82,7 +82,7 @@ void Function::detectMultipleImages( std::string src_path, std::string dst_path 
   }
 }
 
-void Function::detectVideo( std::string src_path, std::string dst_path )
+void Function::detectVideo( std::string src_path, std::string dst_path, bool use_tracking )
 {
   bool show = dst_path.compare("") == 0 ? true : false;
 
@@ -94,6 +94,8 @@ void Function::detectVideo( std::string src_path, std::string dst_path )
     std::cout << "Cannot open " << src_path << std::endl;
     return;
   }
+
+  double fps = cap.get( CV_CAP_PROP_FPS );
 
   std::cout << "Detection on video: " << src_path << std::endl;
 
@@ -122,7 +124,8 @@ void Function::detectVideo( std::string src_path, std::string dst_path )
     }
 
     int codec = CV_FOURCC( 'M', 'J', 'P', 'G' );
-    double fps = 25.0;
+    // fps = cap.get( CV_CAP_PROP_FPS );
+    // double fps = 25.0;
     writer.open( write_path, codec, fps, sample.size(), true );
 
     if( !writer.isOpened() )
@@ -132,14 +135,68 @@ void Function::detectVideo( std::string src_path, std::string dst_path )
     }
   }
 
+  // cv::Ptr<cv::Tracker> tracker = cv::TrackerMIL::create();
+  std::vector<cv::Ptr<cv::Tracker> > trackers(NUM_FEATURES,cv::TrackerMIL::create());
+  bool isInit[NUM_FEATURES] = {false};
+
+  int count = 0;
+  int detection_rate = fps;
+
   while( true )
   {
+    std::cout << "frame" << count << std::endl;
     cv::Mat frame;
     cap >> frame;
 
     if( !frame.data )  break;
 
-    std::vector<cv::Rect> detections = detector.detect( frame );
+    std::vector<cv::Rect> detections(NUM_FEATURES, cv::Rect());
+
+    if( use_tracking )
+    {
+      if( count % detection_rate == 0 )
+      {
+        detections = detector.detect( frame );
+
+        // #pragma omp parallel for shared( isInit, trackers, detections )
+        for( int i = 0; i < trackers.size(); i++ )
+        {
+          if( detections[i].area() > 0 )
+          {
+            if( count > 0 )
+            {
+              trackers[i]->clear();
+              trackers[i] = cv::TrackerMIL::create();
+            }
+            trackers[i]->init(frame, detections[i]);
+            isInit[i] = true;
+          }
+          else
+          {
+            isInit[i] = false;
+          }
+        }
+      }
+      else
+      {
+        // #pragma parallel omp for shared( isInit, trackers, detections )
+        for( int i = 0; i < trackers.size(); i++ )
+        {
+          if( isInit[i] )
+          {
+            cv::Rect2d updated_rect_2d;
+            trackers[i]->update( frame, updated_rect_2d );
+            cv::Rect updated_rect( (int)updated_rect_2d.x, (int)updated_rect_2d.y, (int)updated_rect_2d.width, (int)updated_rect_2d.height );
+            detections[i] = updated_rect;
+          }
+        }
+      }
+    }
+    else
+    {
+      detections = detector.detect( frame );
+    }
+
     Detector::drawDetections( frame, detections );
 
     if( show )
@@ -151,6 +208,8 @@ void Function::detectVideo( std::string src_path, std::string dst_path )
     {
       writer.write( frame );
     }
+
+    count++;
   }
 }
 
