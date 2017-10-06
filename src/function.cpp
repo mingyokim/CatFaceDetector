@@ -84,6 +84,9 @@ void Function::detectMultipleImages( std::string src_path, std::string dst_path 
 
 void Function::detectVideo( std::string src_path, std::string dst_path, bool use_tracking )
 {
+  boost::posix_time::ptime t1, t2;
+  boost::posix_time::time_duration dur;
+
   bool show = dst_path.compare("") == 0 ? true : false;
 
   cv::VideoCapture cap( src_path );
@@ -139,11 +142,16 @@ void Function::detectVideo( std::string src_path, std::string dst_path, bool use
   int count = 0;
   int detection_rate = fps;
 
+  double total_tracking_time = 0.0;
+  int total_tracking_count = 0;
+
   while( true )
   {
     std::cout << "frame" << count << std::endl;
     cv::Mat frame;
-    cap >> frame;
+    cap.read(frame);
+    cv::Mat clone = frame.clone();
+    // cap >> frame;
 
     if( !frame.data )  break;
 
@@ -155,7 +163,7 @@ void Function::detectVideo( std::string src_path, std::string dst_path, bool use
       {
         detections = detector.detect( frame );
 
-        for( int i = 0; i < trackers.size(); i++ )
+        for( int i = FACE+1; i < trackers.size(); i++ )
         {
           if( detections[i].area() > 0 )
           {
@@ -175,16 +183,54 @@ void Function::detectVideo( std::string src_path, std::string dst_path, bool use
       }
       else
       {
-        for( int i = 0; i < trackers.size(); i++ )
-        {
-          if( isInit[i] )
-          {
-            cv::Rect2d updated_rect_2d;
-            trackers[i]->update( frame, updated_rect_2d );
-            cv::Rect updated_rect( (int)updated_rect_2d.x, (int)updated_rect_2d.y, (int)updated_rect_2d.width, (int)updated_rect_2d.height );
-            detections[i] = updated_rect;
+        t1 = boost::posix_time::microsec_clock::local_time();
+
+        //pthread
+        pthread_t pthreads[NUM_FEATURES-1];
+        for( int i = FACE+1; i < trackers.size(); i++ ) {
+          updateTrackingThreadArgs args;
+          args.tracker = trackers[i];
+          args.detection = &detections[i];
+          args.isInit = isInit[i];
+          // std::cout << "1" << std::endl;
+          args.frame = &clone;
+          // std::cout << "2" << std::endl;
+          struct updateTrackingThreadArgs *ptr = (struct updateTrackingThreadArgs *)calloc(1, sizeof( struct updateTrackingThreadArgs ) );
+          // std::cout << "3" << std::endl;
+          *ptr = args;
+          // std::cout << "4" << std::endl;
+          if( pthread_create(pthreads+i-1, NULL, updateTrackingThread, ptr)) {
+            std::cout << "Thread creation failed!" << std::endl;
+            return;
           }
         }
+
+        for( int i = FACE+1; i < trackers.size(); i++ ) {
+          if( pthread_join(pthreads[i-1],NULL) ) {
+            std::cout << "Thread join failed!" << std::endl;
+            return;
+          }
+        }
+
+        // sequential
+        // for( int i = FACE+1; i < trackers.size(); i++ )
+        // {
+        //   if( isInit[i] )
+        //   {
+        //     cv::Rect2d updated_rect_2d;
+        //     trackers[i]->update( frame, updated_rect_2d );
+        //     cv::Rect updated_rect( (int)updated_rect_2d.x, (int)updated_rect_2d.y, (int)updated_rect_2d.width, (int)updated_rect_2d.height );
+        //     detections[i] = updated_rect;
+        //   }
+        // }
+        
+        t2 = boost::posix_time::microsec_clock::local_time();
+        dur = t2 - t1;
+        int dur_milli = dur.total_milliseconds();
+        std::cout << "Tracking took: " << dur_milli << " ms" << std::endl;
+
+        total_tracking_time += dur_milli;
+        total_tracking_count++;
       }
     }
     else
@@ -197,7 +243,8 @@ void Function::detectVideo( std::string src_path, std::string dst_path, bool use
     if( show )
     {
       cv::imshow( "video", frame );
-      cv::waitKey(fps);
+      cv::waitKey(1);
+      // cv::waitKey(0);
     }
     else
     {
@@ -206,6 +253,26 @@ void Function::detectVideo( std::string src_path, std::string dst_path, bool use
 
     count++;
   }
+
+  if( use_tracking ) {
+    std::cout << "Average tracking time per frame: " << total_tracking_time/total_tracking_count << " ms" << std::endl;
+  }
+}
+
+void *Function::updateTrackingThread(void *ptr) {
+  // std::cout << "6" << std::endl;
+  updateTrackingThreadArgs args = *(struct updateTrackingThreadArgs *) ptr;
+
+  if( args.isInit )
+  {
+    cv::Rect2d updated_rect_2d;
+    args.tracker->update( *(args.frame), updated_rect_2d );
+    cv::Rect updated_rect( (int)updated_rect_2d.x, (int)updated_rect_2d.y, (int)updated_rect_2d.width, (int)updated_rect_2d.height );
+    *(args.detection) = updated_rect;
+  }
+
+  free(ptr);
+  return NULL;
 }
 
 std::vector<boost::filesystem::path> Function::getImagePathsInFolder( const boost::filesystem::path &folder, const std::string &ext )

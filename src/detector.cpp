@@ -92,7 +92,8 @@ void Detector::drawDetections( cv::Mat &image, std::vector<cv::Rect> detections 
   for( int i = 0; i < detections.size(); i++ )
   {
     cv::Scalar color;
-    if( i == FACE )             color = cv::Scalar(255,255,0);
+    // if( i == FACE )             color = cv::Scalar(255,255,0);
+    if( i == FACE )             continue;
     else if( i <= RIGHT_EAR )   color = cv::Scalar(255,0,0);
     else if( i <= RIGHT_EYE )   color = cv::Scalar(0,255,0);
     else                        color = cv::Scalar(0,0,255);
