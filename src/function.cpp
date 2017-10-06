@@ -124,8 +124,6 @@ void Function::detectVideo( std::string src_path, std::string dst_path, bool use
     }
 
     int codec = CV_FOURCC( 'M', 'J', 'P', 'G' );
-    // fps = cap.get( CV_CAP_PROP_FPS );
-    // double fps = 25.0;
     writer.open( write_path, codec, fps, sample.size(), true );
 
     if( !writer.isOpened() )
@@ -135,8 +133,7 @@ void Function::detectVideo( std::string src_path, std::string dst_path, bool use
     }
   }
 
-  // cv::Ptr<cv::Tracker> tracker = cv::TrackerMIL::create();
-  std::vector<cv::Ptr<cv::Tracker> > trackers(NUM_FEATURES,cv::TrackerMIL::create());
+  std::vector<cv::Ptr<cv::Tracker> > trackers(NUM_FEATURES,cv::TrackerKCF::create());
   bool isInit[NUM_FEATURES] = {false};
 
   int count = 0;
@@ -158,7 +155,6 @@ void Function::detectVideo( std::string src_path, std::string dst_path, bool use
       {
         detections = detector.detect( frame );
 
-        // #pragma omp parallel for shared( isInit, trackers, detections )
         for( int i = 0; i < trackers.size(); i++ )
         {
           if( detections[i].area() > 0 )
@@ -166,8 +162,8 @@ void Function::detectVideo( std::string src_path, std::string dst_path, bool use
             if( count > 0 )
             {
               trackers[i]->clear();
-              trackers[i] = cv::TrackerMIL::create();
             }
+            trackers[i] = cv::TrackerMIL::create();
             trackers[i]->init(frame, detections[i]);
             isInit[i] = true;
           }
@@ -179,7 +175,6 @@ void Function::detectVideo( std::string src_path, std::string dst_path, bool use
       }
       else
       {
-        // #pragma parallel omp for shared( isInit, trackers, detections )
         for( int i = 0; i < trackers.size(); i++ )
         {
           if( isInit[i] )
@@ -202,7 +197,7 @@ void Function::detectVideo( std::string src_path, std::string dst_path, bool use
     if( show )
     {
       cv::imshow( "video", frame );
-      cv::waitKey(5);
+      cv::waitKey(fps);
     }
     else
     {

@@ -41,7 +41,7 @@ int main( int argc, char *argv[] )
 
 void help( char *argv[] )
 {
-  cout << "usage: " << string( argv[0] ) << " [function]" << " [src_path]" << " (dst_path)" << endl << endl;
+  cout << "usage: " << string( argv[0] ) << " [function] [src_path] (video?)(tracking) (dst_path)" << endl << endl;
   cout << "function: ['image', 'images', 'video', 'help']" << endl;
   cout << "\timage: run detection on a single image" << endl;
   cout << "\timages: run detection on all images in a folder" << endl;
@@ -51,6 +51,7 @@ void help( char *argv[] )
   cout << "\timage: path to a single image" << endl;
   cout << "\timages: path to a folder containing one or more images" <<  endl;
   cout << "\tvideo: path to a video" << endl << endl;
+  cout << "tracking(for video only)[default = 0] if set to 1, detect less frequently and use tracking in between" << endl << endl;
   cout << "dst_path (optional): path to the folder in which you wish the program to write the detection results;" << endl;
   cout << "\tif not specified, the program will simply show the detection in a GUI" << endl << endl;
 }
