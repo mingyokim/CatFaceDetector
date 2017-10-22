@@ -4,3 +4,5 @@ cmake/
 results/
 video/
 detector
+.idea/
+cmake-build-debug/

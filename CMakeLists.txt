@@ -25,7 +25,7 @@ set( SOURCE
   src/detector.cpp
   src/main.cpp
   src/function.cpp
-)
+  src/video.cpp src/video.hpp)
 
 add_executable( detector ${SOURCE} )
 
