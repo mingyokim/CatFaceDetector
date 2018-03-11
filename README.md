@@ -3,6 +3,8 @@ Implementation of cat face and facial features detection system using Darknet as
 
 Darknet with YOLOv2: https://pjreddie.com/darknet/yolo/
 
+Write up: https://mingyokim.github.io/snapcat.html
+
 ## Demo
 ### Sample Detection
 <img src="preview/nemo.jpg" width="480">
